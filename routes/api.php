@@ -27,6 +27,10 @@ Route::middleware('auth:api')->post('/conteudo/cadastrar', 'ConteudoController@c
 
 Route::middleware('auth:api')->get('/conteudo/listar', 'ConteudoController@listar');
 
+Route::middleware('auth:api')->put('/conteudo/curtir/{id}', 'ConteudoController@curtir');
+
+Route::middleware('auth:api')->put('/conteudo/comentar/{id}', 'ConteudoController@comentar');
+
 Route::post('/listarConteudo', 'UserController@listarConteudo');
 
 Route::get('/testesAmigos', function ()

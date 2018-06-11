@@ -149,7 +149,7 @@ class UserController extends Controller
                 'validacao' => true,
                 'erros' => $valid->errors()
               ];
-        }
+      }
 
       $time = time();
       $diretorioPai = 'perfils';
@@ -164,7 +164,7 @@ class UserController extends Controller
       {
         mkdir($diretorioPai,0700);
       }
-      $imgUser = str_replace(asset('/'),'',$user->image)
+      $imgUser = str_replace(asset('/'),'',$user->image);
       if($imgUser)
       {
         if(file_exists($imgUser))

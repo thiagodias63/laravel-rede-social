@@ -15,6 +15,15 @@ class ConteudoController extends Controller
   {
       //return Conteudo::with('user')->orderBy('data', 'desc')->get(); pega todos
       $conteudos = Conteudo::with('user')->orderBy('data', 'desc')->paginate(5);
+      $user = $request->user();
+
+      foreach ($conteudos as $key => $conteudo)
+      {
+          $conteudo->total_curtidas = $conteudo->curtidas()->count();
+          $conteudo->total_comentarios = $conteudo->comentarios()->count();
+          $conteudo->comentarios = $conteudo->comentarios()->with('user')->get();
+          $conteudo->curtiu = ($user->curtidas()->find($conteudo->id)) ? true : false;
+      }
       return [
         'status' => true,
         'conteudos' => $conteudos
@@ -26,8 +35,6 @@ class ConteudoController extends Controller
 
     $data = $request->all();
     $user = $request->user();
-    //return $data;
-    //$user = User::find($data['user']['id']);
     $conteudo = new Conteudo;
     $conteudo->titulo = $data['titulo'];
     $conteudo->texto = $data['texto'];
@@ -35,12 +42,21 @@ class ConteudoController extends Controller
     $conteudo->link = ($data['link']) ? $data['link'] : '#';
     $conteudo->data = date('Y/m/d H:i:s');
 
+    $valid = Validator::make($data,[
+      'titulo' => 'required',
+      'texto' => 'required'
+    ]);
+
+    if($valid->fails())
+    {
+      return [
+              'status' => false,
+              'validacao' => true,
+              'erros' => $valid->errors()
+            ];
+    }
+
     $user->conteudos()->save($conteudo);
-    //return $conteudo;
-    // return [
-    //     'status' => true,
-    //     'conteudos' => $user->conteudos
-    //   ];
     $conteudos = Conteudo::with('user')->orderBy('data', 'desc')->paginate(5);
     return [
       'status' => true,
@@ -48,4 +64,49 @@ class ConteudoController extends Controller
     ];
   }
 
+  public function curtir($id, Request $request)
+  {
+    $conteudo = Conteudo::find($id);
+    if($conteudo)
+    {
+      $user = $request->user();
+      $user->curtidas()->toggle($conteudo->id);
+      return [
+        'status' => true,
+        'curtidas' => $conteudo->curtidas()->count(),
+        'lista' => $this->listar($request)
+      ];
+    }
+    else
+    {
+      return [
+        'status' => false,
+        'erros' => 'Conteúdo não existe'
+      ];
+    }
+  }
+  public function comentar($id, Request $request)
+  {
+    $conteudo = Conteudo::find($id);
+    if($conteudo)
+    {
+      $user = $request->user();
+      $user->comentarios()->create([
+        'conteudo_id' => $conteudo->id,
+        'texto' => $request->texto,
+        'data' => date('Y-m-d H:i:s')
+      ]);
+      return [
+        'status' => true,
+        'lista' => $this->listar($request)
+      ];
+    }
+    else
+    {
+      return [
+        'status' => false,
+        'erros' => 'Conteúdo não existe'
+      ];
+    }
+  }
 }
